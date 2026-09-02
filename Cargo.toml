@@ -37,3 +37,9 @@ walkdir = "2"
 
 [features]
 test_with_stereo = [] # Compile with this feature to set the max i/o channels as `2`.
+
+# Antopia: vendored coreaudio-sys with pre-generated bindings (upstream's
+# bindgen 0.32 cannot run on this machine's modern libclang). See the header
+# comment in vendor/coreaudio-sys/build.rs.
+[patch.crates-io]
+coreaudio-sys = { path = "vendor/coreaudio-sys" }
