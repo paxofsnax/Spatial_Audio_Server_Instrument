@@ -46,3 +46,4 @@ coreaudio-sys = { path = "vendor/coreaudio-sys" }
 crossbeam = { path = "vendor/crossbeam" }
 linked-hash-map = { path = "vendor/linked-hash-map" }
 glium = { path = "vendor/glium" }
+nannou = { path = "vendor/nannou" }

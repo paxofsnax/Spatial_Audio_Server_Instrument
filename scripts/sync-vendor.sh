@@ -25,6 +25,7 @@ coreaudio-sys:coreaudio-sys-0.2.2
 crossbeam:crossbeam-0.3.2
 linked-hash-map:linked-hash-map-0.5.2
 glium:glium-0.21.0
+nannou:nannou-0.5.2
 "
 
 for pair in $PAIRS; do

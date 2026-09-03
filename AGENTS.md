@@ -41,6 +41,9 @@ Several old dependencies use Rust UB that rustc 1.54 rejects at runtime
 - `vendor/linked-hash-map` (0.5.2) — uninit guard-node UB removed.
 - `vendor/glium` (0.21.0) — null-reference in `implement_vertex!` replaced
   (was: instant SIGILL when the GUI drew its first frame).
+- `vendor/nannou` (0.5.2) — `inner_size_points` MULTIPLIED pixels by the hidpi
+  factor (points = pixels / hidpi). On Retina this laid the UI out at 4x the
+  window size: no side menu, broken pan/zoom until a resize event fixed it.
 
 **Gotcha:** `.cargo/config` replaces crates.io with a local directory source,
 so cargo IGNORES the `[patch.crates-io]` section. What actually gets compiled

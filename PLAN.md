@@ -49,11 +49,12 @@ Intel macOS 12.7.6 — primarily **soundscape behaviour work** in
    1.54) and a vendored `glium` fix (null-reference in `implement_vertex!`
    trapped as SIGILL on first frame draw). Ngon movement hardened against
    degenerate `vertices`/`nth` values from saved project state.
-2. **Known GUI issues (from first stable run, 4 Sep 2026)** — investigate:
-   - Background cannot be panned/moved; zoom limited (~1 click).
-   - Mouse interaction with the floorplan appears non-functional.
-   - The side menu with project options is not viewable/accessible (may be a
-     window-size/layout issue — check conrod widget placement vs screen size).
+2. **GUI issues (first stable run, 4 Sep 2026) — FIXED.** Root cause: nannou
+   0.5's `inner_size_points` multiplied pixels by the hidpi factor, so on
+   Retina the conrod UI was laid out at 4x the window size (no side menu,
+   broken pan/zoom until a resize event fixed it). Fixed in
+   `vendor/nannou/src/window.rs` (points = pixels / hidpi). Window size also
+   set to 1440x900 in configs to fit the 1440x900-point Retina screen.
 3. Soundscape work: identify the first behaviour change desired (spawning,
    noise-walk, or spatialisation), design in plan mode, implement.
 4. Packaging via `nannou-package` when a build is ready to deploy.
