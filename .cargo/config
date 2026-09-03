@@ -1,0 +1,5 @@
+[source.crates-io]
+replace-with = "local-registry"
+
+[source.local-registry]
+directory = "/Users/richardpilkington/.cargo/registry/src/github.com-1ecc6299db9ec823"
