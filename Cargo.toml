@@ -43,3 +43,6 @@ test_with_stereo = [] # Compile with this feature to set the max i/o channels as
 # comment in vendor/coreaudio-sys/build.rs.
 [patch.crates-io]
 coreaudio-sys = { path = "vendor/coreaudio-sys" }
+crossbeam = { path = "vendor/crossbeam" }
+linked-hash-map = { path = "vendor/linked-hash-map" }
+glium = { path = "vendor/glium" }
