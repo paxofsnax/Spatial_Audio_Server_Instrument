@@ -70,6 +70,11 @@ impl Ngon {
         installation_bounding_rect: &BoundingRect,
     ) -> Self
     {
+        // Antopia: guard against degenerate values loaded from project state
+        // (e.g. `vertices` range starting at 0) which would otherwise cause a
+        // divide-by-zero panic in the modulo operations below.
+        let vertices = vertices.max(3);
+        let nth = nth.max(1);
         let start = 0;
         let end = (start + nth) % vertices;
         let line = Line { start, end };
