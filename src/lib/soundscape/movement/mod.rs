@@ -4,9 +4,11 @@ use nannou::prelude::*;
 
 pub use self::agent::Agent;
 pub use self::ngon::Ngon;
+pub use self::noise_walk::NoiseWalk;
 
 pub mod agent;
 pub mod ngon;
+pub mod noise_walk;
 
 /// Whether the sound has fixed movement or generative movement.
 #[derive(Debug)]
@@ -24,6 +26,8 @@ pub enum Generative {
     Agent(Agent),
     /// A 2D N-sided, symmetrical polygon path tracing movement implementation.
     Ngon(Ngon),
+    /// A movement implementation that wanders smoothly through Perlin noise.
+    NoiseWalk(NoiseWalk),
 }
 
 /// The bounding box for an iterator yielding points.
@@ -48,6 +52,7 @@ impl Generative {
         match *self {
             Generative::Agent(ref agent) => agent.position(),
             Generative::Ngon(ref ngon) => ngon.position(),
+            Generative::NoiseWalk(ref noise_walk) => noise_walk.position(),
         }
     }
 }

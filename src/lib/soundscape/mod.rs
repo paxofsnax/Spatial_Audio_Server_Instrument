@@ -1020,6 +1020,33 @@ fn generate_movement(
                 let generative = movement::Generative::Ngon(ngon);
                 let movement = Movement::Generative(generative);
                 movement
+            },
+
+            audio::source::movement::Generative::NoiseWalk(ref noise_walk) => {
+                let mut rng = nannou::rand::thread_rng();
+                // TODO: Should these be skewed?
+                let r = &noise_walk.speed;
+                let speed = map_range(rng.gen(), 0f64, 1.0, r.min, r.max);
+                let r = &noise_walk.wobble_scale;
+                let wobble_scale = map_range(rng.gen(), 0f64, 1.0, r.min, r.max);
+                // Random phase offsets decorrelate the walk from other noise
+                // walking sounds so that they do not move in lockstep.
+                let phase_offset = vec2(
+                    map_range(rng.gen(), 0f64, 1.0, 0.0, 1000.0),
+                    map_range(rng.gen(), 0f64, 1.0, 0.0, 1000.0),
+                );
+                let bounding_rect = &installation_areas[&installation].bounding_rect;
+                let noise_walk = movement::NoiseWalk::new(
+                    speed,
+                    wobble_scale,
+                    noise_walk.normalised_dimensions,
+                    noise_walk.directional,
+                    phase_offset,
+                    bounding_rect,
+                );
+                let generative = movement::Generative::NoiseWalk(noise_walk);
+                let movement = Movement::Generative(generative);
+                movement
             }
         },
     }
@@ -1393,6 +1420,11 @@ fn tick(model: &mut Model, tick: Tick) {
                     movement::Generative::Ngon(ref mut ngon) => {
                         if let Some(area) = initial_installation_area {
                             ngon.update(&tick.since_last_tick, &area.bounding_rect);
+                        }
+                    },
+                    movement::Generative::NoiseWalk(ref mut noise_walk) => {
+                        if let Some(area) = initial_installation_area {
+                            noise_walk.update(&tick.since_last_tick, &area.bounding_rect);
                         }
                     },
                 },

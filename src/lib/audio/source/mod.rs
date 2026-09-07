@@ -173,6 +173,9 @@ pub mod movement {
     /// The maximum allowed radians offset for rotating a Ngon.
     pub const MAX_RADIANS_OFFSET: f64 = 2.0 * PI_F64;
 
+    /// The absolute maximum wobble scale (noise phase units per second) of a noise walk.
+    pub const MAX_WOBBLE_SCALE: f64 = 1.0;
+
     /// The amount of skew applied to the perception of the max speed constraints.
     pub const MAX_SPEED_SKEW: f32 = 0.25;
 
@@ -201,6 +204,7 @@ pub mod movement {
     pub enum Generative {
         Agent(Agent),
         Ngon(Ngon),
+        NoiseWalk(NoiseWalk),
     }
 
     /// A generative movement kind modelling an automonomous agent.
@@ -242,6 +246,32 @@ pub mod movement {
         pub speed: Range<f64>,
     }
 
+    /// A generative movement kind that wanders smoothly through Perlin noise.
+    ///
+    /// Two independent 1-D noise signals form a drifting direction vector; the
+    /// sound travels along it at `speed`, contained within the installation
+    /// area scaled by `normalised_dimensions`.
+    #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+    pub struct NoiseWalk {
+        /// The rate at which the sound travels in metres per second.
+        #[serde(default = "super::default::noise_walk_speed")]
+        pub speed: Range<f64>,
+        /// The rate at which the direction of travel changes (noise phase units per second).
+        ///
+        /// Low values produce long, lazy arcs; high values produce twitchy wandering.
+        #[serde(default = "super::default::noise_walk_wobble_scale")]
+        pub wobble_scale: Range<f64>,
+        /// Describes the area within which the sound may roam using a normalised value.
+        ///
+        /// `0.0` means all points will be in the center.
+        /// `1.0` means the sound may roam to the bounds of the installation area.
+        #[serde(default = "super::default::normalised_dimensions")]
+        pub normalised_dimensions: Vector2<f64>,
+        /// Whether or not the sound's orientation should follow its direction of travel.
+        #[serde(default = "super::default::noise_walk_directional")]
+        pub directional: bool,
+    }
+
     impl Movement {
         pub const VARIANT_COUNT: usize = 2;
 
@@ -273,13 +303,14 @@ pub mod movement {
     }
 
     impl Generative {
-        pub const VARIANT_COUNT: usize = 2;
+        pub const VARIANT_COUNT: usize = 3;
 
         /// Produce the index of the Movement value variant.
         pub fn to_index(&self) -> usize {
             match *self {
                 Generative::Agent(_) => 0,
                 Generative::Ngon(_) => 1,
+                Generative::NoiseWalk(_) => 2,
             }
         }
 
@@ -288,6 +319,7 @@ pub mod movement {
             match i {
                 0 => "AGENT",
                 1 => "NGON",
+                2 => "NOISE WALK",
                 _ => "",
             }
         }
@@ -297,6 +329,7 @@ pub mod movement {
             match i {
                 0 => Some(Generative::Agent(super::default::AGENT)),
                 1 => Some(Generative::Ngon(super::default::NGON)),
+                2 => Some(Generative::NoiseWalk(super::default::NOISE_WALK)),
                 _ => None,
             }
         }
@@ -659,6 +692,15 @@ pub mod default {
         radians_offset: RADIANS_OFFSET,
         speed: SPEED,
     };
+    pub const NOISE_WALK_SPEED: Range<f64> = Range { min: 0.2, max: 1.0 };
+    pub const NOISE_WALK_WOBBLE_SCALE: Range<f64> = Range { min: 0.05, max: 0.2 };
+    pub const NOISE_WALK_DIRECTIONAL: bool = false;
+    pub const NOISE_WALK: movement::NoiseWalk = movement::NoiseWalk {
+        speed: NOISE_WALK_SPEED,
+        wobble_scale: NOISE_WALK_WOBBLE_SCALE,
+        normalised_dimensions: NORMALISED_DIMENSIONS,
+        directional: NOISE_WALK_DIRECTIONAL,
+    };
     pub const GENERATIVE: movement::Generative = movement::Generative::Agent(AGENT);
     pub const MOVEMENT: Movement = Movement::Fixed(FIXED);
 
@@ -700,6 +742,22 @@ pub mod default {
 
     pub fn radians_offset() -> Range<f64> {
         RADIANS_OFFSET
+    }
+
+    pub fn normalised_dimensions() -> Vector2<f64> {
+        NORMALISED_DIMENSIONS
+    }
+
+    pub fn noise_walk_speed() -> Range<f64> {
+        NOISE_WALK_SPEED
+    }
+
+    pub fn noise_walk_wobble_scale() -> Range<f64> {
+        NOISE_WALK_WOBBLE_SCALE
+    }
+
+    pub fn noise_walk_directional() -> bool {
+        NOISE_WALK_DIRECTIONAL
     }
 
     pub fn max_speed() -> Range<f64> {

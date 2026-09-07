@@ -2706,6 +2706,317 @@ pub fn set(
                             .expect("failed to send movement update to soundscape thread");
                     }
                 },
+
+                // NoiseWalk-specific widgets.
+                audio::source::movement::Generative::NoiseWalk(mut noise_walk) => {
+                    /////////////////
+                    // Directional //
+                    /////////////////
+
+                    let on_off = if noise_walk.directional { "ON" } else { "OFF" };
+                    let label = format!("Directional: {}", on_off);
+                    for new_directional in widget::Toggle::new(noise_walk.directional)
+                        .label(&label)
+                        .label_font_size(SMALL_FONT_SIZE)
+                        .mid_left_of(ids.source_editor_selected_soundscape_canvas)
+                        .down(PAD * 2.0)
+                        .h(ITEM_HEIGHT)
+                        .w(canvas_kid_area.w())
+                        .color(ui::color::LIGHT_CHARCOAL)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_directional, ui)
+                    {
+                        // Update local copy.
+                        noise_walk.directional = new_directional;
+                        let generative = audio::source::movement::Generative::NoiseWalk(noise_walk.clone());
+                        let movement = audio::source::Movement::Generative(generative);
+                        let soundscape = expect_soundscape_mut(sources, &id);
+                        soundscape.movement = movement.clone();
+
+                        // Update the soundsape thread copy.
+                        channels
+                            .soundscape
+                            .send(move |soundscape| {
+                                // Update all active sounds.
+                                soundscape.update_active_sounds_with_source(id, |_, sound| {
+                                    let gen = match sound.movement {
+                                        soundscape::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        soundscape::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.directional = new_directional;
+                                });
+
+                                // Update the source.
+                                soundscape.update_source(&id, |source| {
+                                    let gen = match source.movement {
+                                        audio::source::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.directional = new_directional;
+                                });
+                            })
+                            .expect("failed to send source movement update to soundscape thread");
+                    }
+
+                    ///////////
+                    // Speed //
+                    ///////////
+
+                    widget::Text::new("Speed")
+                        .mid_left_of(ids.source_editor_selected_soundscape_canvas)
+                        .down(PAD * 2.0)
+                        .font_size(SMALL_FONT_SIZE)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_speed_text, ui);
+
+                    let min = noise_walk.speed.min;
+                    let max = noise_walk.speed.max;
+                    let total_min = 0.0;
+                    let total_max = audio::source::movement::MAX_SPEED;
+                    let label = format!("{:.2} to {:.2} metres per second", min, max);
+                    for (edge, value) in range_slider(min, max, total_min, total_max)
+                        .align_left()
+                        .label(&label)
+                        .down(PAD * 2.0)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_speed_slider, ui)
+                    {
+                        match edge {
+                            widget::range_slider::Edge::Start => noise_walk.speed.min = value,
+                            widget::range_slider::Edge::End => noise_walk.speed.max = value,
+                        }
+
+                        // Update local copy.
+                        let soundscape = expect_soundscape_mut(sources, &id);
+                        let generative = audio::source::movement::Generative::NoiseWalk(noise_walk.clone());
+                        let movement = audio::source::Movement::Generative(generative);
+                        soundscape.movement = movement.clone();
+
+                        // Update the soundsape thread copy.
+                        let new_speed = noise_walk.speed;
+                        channels
+                            .soundscape
+                            .send(move |soundscape| {
+                                // Update all active sounds.
+                                soundscape.update_active_sounds_with_source(id, |_, sound| {
+                                    let gen = match sound.movement {
+                                        soundscape::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        soundscape::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.speed = new_speed.clamp(noise_walk.speed);
+                                });
+
+                                // Update the source.
+                                soundscape.update_source(&id, |source| {
+                                    let gen = match source.movement {
+                                        audio::source::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.speed = new_speed;
+                                });
+                            })
+                            .expect("failed to send movement update to soundscape thread");
+                    }
+
+                    /////////////////
+                    // Wobble Scale //
+                    /////////////////
+
+                    widget::Text::new("Wobble Scale")
+                        .mid_left_of(ids.source_editor_selected_soundscape_canvas)
+                        .down(PAD * 2.0)
+                        .font_size(SMALL_FONT_SIZE)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_wobble_text, ui);
+
+                    let min = noise_walk.wobble_scale.min;
+                    let max = noise_walk.wobble_scale.max;
+                    let total_min = 0.0;
+                    let total_max = audio::source::movement::MAX_WOBBLE_SCALE;
+                    let label = format!("{:.2} to {:.2} direction changes per second", min, max);
+                    for (edge, value) in range_slider(min, max, total_min, total_max)
+                        .align_left()
+                        .label(&label)
+                        .down(PAD * 2.0)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_wobble_slider, ui)
+                    {
+                        match edge {
+                            widget::range_slider::Edge::Start => noise_walk.wobble_scale.min = value,
+                            widget::range_slider::Edge::End => noise_walk.wobble_scale.max = value,
+                        }
+
+                        // Update local copy.
+                        let soundscape = expect_soundscape_mut(sources, &id);
+                        let generative = audio::source::movement::Generative::NoiseWalk(noise_walk.clone());
+                        let movement = audio::source::Movement::Generative(generative);
+                        soundscape.movement = movement.clone();
+
+                        // Update the soundsape thread copy.
+                        let new_wobble_scale = noise_walk.wobble_scale;
+                        channels
+                            .soundscape
+                            .send(move |soundscape| {
+                                // Update all active sounds.
+                                soundscape.update_active_sounds_with_source(id, |_, sound| {
+                                    let gen = match sound.movement {
+                                        soundscape::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        soundscape::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.wobble_scale = new_wobble_scale.clamp(noise_walk.wobble_scale);
+                                });
+
+                                // Update the source.
+                                soundscape.update_source(&id, |source| {
+                                    let gen = match source.movement {
+                                        audio::source::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.wobble_scale = new_wobble_scale;
+                                });
+                            })
+                            .expect("failed to send movement update to soundscape thread");
+                    }
+
+                    ////////////////
+                    // Dimensions //
+                    ////////////////
+
+                    widget::Text::new("Normalised Dimensions")
+                        .mid_left_of(ids.source_editor_selected_soundscape_canvas)
+                        .down(PAD * 2.0)
+                        .font_size(SMALL_FONT_SIZE)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_dimensions_text, ui);
+
+                    let slider = |value, min, max| {
+                        widget::Slider::new(value, min, max)
+                            .h(SLIDER_H)
+                            .w(canvas_kid_area.w())
+                            .label_font_size(SMALL_FONT_SIZE)
+                            .color(ui::color::LIGHT_CHARCOAL)
+                    };
+
+                    ///////////
+                    // Width //
+                    ///////////
+
+                    let label = format!("{:.2}% of installation width", noise_walk.normalised_dimensions.x * 100.0);
+                    for new_width in slider(noise_walk.normalised_dimensions.x, 0.0, 1.0)
+                        .align_left()
+                        .label(&label)
+                        .down(PAD * 2.0)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_width_slider, ui)
+                    {
+                        // Update local copy.
+                        let soundscape = expect_soundscape_mut(sources, &id);
+                        if let audio::source::Movement::Generative(ref mut gen) = soundscape.movement {
+                            if let audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) = *gen {
+                                noise_walk.normalised_dimensions.x = new_width;
+                            }
+                        }
+
+                        // Update the soundsape thread copy.
+                        channels
+                            .soundscape
+                            .send(move |soundscape| {
+                                // Update all active sounds.
+                                soundscape.update_active_sounds_with_source(id, |_, sound| {
+                                    let gen = match sound.movement {
+                                        soundscape::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        soundscape::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.normalised_dimensions.x = new_width;
+                                });
+                                // Update the source.
+                                soundscape.update_source(&id, |source| {
+                                    let gen = match source.movement {
+                                        audio::source::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.normalised_dimensions.x = new_width;
+                                });
+                            })
+                            .expect("failed to send movement update to soundscape thread");
+                    }
+
+                    ////////////
+                    // Height //
+                    ////////////
+
+                    let label = format!("{:.2}% of installation height", noise_walk.normalised_dimensions.y * 100.0);
+                    for new_height in slider(noise_walk.normalised_dimensions.y, 0.0, 1.0)
+                        .align_left()
+                        .label(&label)
+                        .down(PAD)
+                        .set(ids.source_editor_selected_soundscape_movement_noise_walk_height_slider, ui)
+                    {
+                        // Update local copy.
+                        let soundscape = expect_soundscape_mut(sources, &id);
+                        if let audio::source::Movement::Generative(ref mut gen) = soundscape.movement {
+                            if let audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) = *gen {
+                                noise_walk.normalised_dimensions.y = new_height;
+                            }
+                        }
+
+                        // Update the soundsape thread copy.
+                        channels
+                            .soundscape
+                            .send(move |soundscape| {
+                                // Update all active sounds.
+                                soundscape.update_active_sounds_with_source(id, |_, sound| {
+                                    let gen = match sound.movement {
+                                        soundscape::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        soundscape::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.normalised_dimensions.y = new_height;
+                                });
+                                // Update the source.
+                                soundscape.update_source(&id, |source| {
+                                    let gen = match source.movement {
+                                        audio::source::Movement::Generative(ref mut gen) => gen,
+                                        _ => return,
+                                    };
+                                    let noise_walk = match *gen {
+                                        audio::source::movement::Generative::NoiseWalk(ref mut noise_walk) => noise_walk,
+                                        _ => return,
+                                    };
+                                    noise_walk.normalised_dimensions.y = new_height;
+                                });
+                            })
+                            .expect("failed to send movement update to soundscape thread");
+                    }
+                },
             }
         },
 
