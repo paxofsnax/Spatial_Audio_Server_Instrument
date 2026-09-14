@@ -55,6 +55,33 @@ Intel macOS 12.7.6 — primarily **soundscape behaviour work** in
    broken pan/zoom until a resize event fixed it). Fixed in
    `vendor/nannou/src/window.rs` (points = pixels / hidpi). Window size also
    set to 1440x900 in configs to fit the 1440x900-point Retina screen.
-3. Soundscape work: identify the first behaviour change desired (spawning,
-   noise-walk, or spatialisation), design in plan mode, implement.
-4. Packaging via `nannou-package` when a build is ready to deploy.
+3. **Soundscape work — first feature DONE (8 Sep 2026):** **NoiseWalk**
+   generative movement (third option alongside Agent/Ngon; velocity-field
+   Perlin walk with speed / wobble_scale / normalised_dimensions /
+   directional). Local commit `30e24e3`, fork commit `6bb2f71`. Remaining
+   directions: spawning/density dynamics, DBAP spatialisation behaviour,
+   further movement types.
+4. **Packaging** via `nannou-package` when a build is ready to deploy.
+5. **Fork assets strategy** — deferred by design: the fork
+   (`paxofsnax/Spatial_Audio_Server_Instrument`, branch `antopia`) carries
+   code only; upstream assets remain as upstream left them. Decide later how
+   to share custom assets (private assets branch, separate repo, or keep
+   local).
+6. **nannou 0.13 port** — future workstream. The fork's `master` is ~20
+   commits ahead of the Antopia base (nannou 0.8→0.10→0.13 migration, ASIO,
+   device selection, upstream ngon fix). Merging is NOT viable — porting
+   means upgrading the code, swapping the vendored UB patches for modern
+   crates and re-verifying.
+
+## GitHub fork (workflow)
+
+- Remote `fork` = https://github.com/paxofsnax/Spatial_Audio_Server_Instrument
+- Fork `master` = upstream snapshot (nannou 0.13) — **left untouched**.
+- Fork branch `antopia` = Antopia code history, built by cherry-picking
+  code-only commits onto the local base (`d129924`), then
+  `git push fork antopia-push:antopia`. Push is run by the user in their own
+  terminal (credentials never pass through the agent).
+- Local branch `antopia` = the real working copy, a superset that also
+  carries the custom assets (audio, floorplan, project state). The two
+  branches intentionally diverge only under `assets/`.
+- http.postBuffer/http.version config fixes applied (RPC 400 on push).

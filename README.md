@@ -18,6 +18,56 @@ The audio server runs on a single machine and is responsible for the following:
   specified by the user.
 - Provides a GUI for creating, editing and running spatial soundscape projects.
 
+## About this fork (Antopia)
+
+This branch (`antopia`) is **Richard Pilkington's customised fork** of the
+original Spatial Audio Server, based on the upstream code as of May 2020
+(nannou 0.5 era), maintained locally as "Antopia". It keeps the original
+Sound Audio Server's behaviour and adds the following:
+
+### Movement: NoiseWalk
+
+A third generative movement kind (alongside AGENT and NGON) for soundscape
+sources. Two independent 1-D Perlin noise signals form a drifting direction
+vector; the sound travels along it at a configurable speed, contained within
+the installation area, with controls for:
+
+- **speed** — travel rate in metres per second (randomised per spawn)
+- **wobble scale** — how fast the direction of travel changes
+- **normalised dimensions** — the roam area, as a fraction of the installation rect
+- **directional** — whether the sound faces its direction of travel
+
+See commit `6bb2f71` ("Add NoiseWalk generative movement") for the full
+write-up.
+
+### Compatibility fixes (vendored crates)
+
+The 2018–2020 era dependency tree uses Rust patterns that modern toolchains
+reject. Patched copies live in `vendor/` (activated via `scripts/sync-vendor.sh`):
+
+- `coreaudio-sys` — pre-generated bindings (bindgen 0.32 cannot run against
+  modern libclang)
+- `crossbeam` 0.3.2 / `linked-hash-map` 0.5.2 — `mem::uninitialized` UB removed
+  (hard runtime panics on rustc ≥ 1.51)
+- `glium` 0.21.0 — null-reference in `implement_vertex!` trapped as SIGILL on
+  first frame draw
+- `nannou` 0.5.2 — `inner_size_points` multiplied pixels by the hidpi factor,
+  laying the conrod UI out at 4x the window size on Retina displays
+
+### Building Antopia
+
+The toolchain is pinned to **rustc 1.54.0** via the `rust-toolchain` file. The
+upstream build steps below are otherwise correct for this vintage, with one
+addition — on machines where another cargo is on PATH first, build with:
+
+```
+PATH="$HOME/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" cargo build --release
+PATH="$HOME/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" cargo run --release
+```
+
+Development context lives in `AGENTS.md` (operating rules) and `PLAN.md`
+(session history, strategy and todos).
+
 ## Table of Contents
 
 1. [Building](./README.md#building)
